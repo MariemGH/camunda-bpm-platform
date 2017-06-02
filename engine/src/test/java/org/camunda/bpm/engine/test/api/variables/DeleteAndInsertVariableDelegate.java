@@ -24,6 +24,10 @@ public class DeleteAndInsertVariableDelegate implements JavaDelegate, Serializab
   public void execute(DelegateExecution execution) throws Exception {
     execution.removeVariable("listVar");
     execution.setVariable("listVar", "value");
+
+//    execution.setVariable("foo", "value");
+//    execution.removeVariable("foo");
+//    execution.setVariable("foo", "bar");
   }
 
 }

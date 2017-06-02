@@ -21,10 +21,15 @@ import java.util.Map;
 import java.util.Set;
 
 import org.camunda.bpm.engine.delegate.VariableScope;
+import org.camunda.bpm.engine.impl.context.Context;
 import org.camunda.bpm.engine.impl.core.variable.CoreVariableInstance;
 import org.camunda.bpm.engine.impl.core.variable.event.VariableEvent;
 import org.camunda.bpm.engine.impl.core.variable.event.VariableEventDispatcher;
+import org.camunda.bpm.engine.impl.db.entitymanager.DbEntityManager;
+import org.camunda.bpm.engine.impl.db.entitymanager.cache.CachedDbEntity;
+import org.camunda.bpm.engine.impl.db.entitymanager.cache.DbEntityState;
 import org.camunda.bpm.engine.impl.javax.el.ELContext;
+import org.camunda.bpm.engine.impl.persistence.entity.VariableInstanceEntity;
 import org.camunda.bpm.engine.variable.VariableMap;
 import org.camunda.bpm.engine.variable.Variables;
 import org.camunda.bpm.engine.variable.impl.VariableMapImpl;
@@ -311,6 +316,25 @@ public abstract class AbstractVariableScope implements Serializable, VariableSco
       CoreVariableInstance existingInstance = variableStore.getVariable(variableName);
       existingInstance.setValue(value);
       invokeVariableLifecycleListenersUpdate(existingInstance, sourceActivityExecution);
+    }
+    else if (variableStore.isRemoved(variableName)) {
+
+      CoreVariableInstance existingInstance = variableStore.getRemovedVariable(variableName);
+
+      existingInstance.setValue(value);
+      getVariableStore().addVariable(existingInstance);
+      invokeVariableLifecycleListenersUpdate(existingInstance, sourceActivityExecution);
+
+      DbEntityManager dbEntityManager = Context.getCommandContext().getDbEntityManager();
+      CachedDbEntity cachedEntity = dbEntityManager.getDbEntityCache().getCachedEntity((VariableInstanceEntity) existingInstance);
+
+      if (cachedEntity.getEntityState() == DbEntityState.DELETED_TRANSIENT) {
+        cachedEntity.setEntityState(DbEntityState.TRANSIENT);
+      }
+      else {
+        cachedEntity.setEntityState(DbEntityState.MERGED);
+      }
+
     }
     else {
       CoreVariableInstance variableValue = getVariableInstanceFactory().build(variableName, value, false);

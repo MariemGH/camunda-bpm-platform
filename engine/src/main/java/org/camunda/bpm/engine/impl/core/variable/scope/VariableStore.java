@@ -68,6 +68,10 @@ public class VariableStore<T extends CoreVariableInstance> {
     return variables;
   }
 
+  public T getRemovedVariable(String name) {
+    return removedVariables.get(name);
+  }
+
   public T getVariable(String name) {
 
     return getVariablesMap().get(name);
@@ -80,14 +84,14 @@ public class VariableStore<T extends CoreVariableInstance> {
 
   public void addVariable(T value) {
 
-    if(removedVariables.containsKey(value.getName())){
-      getVariablesMap().put(value.getName(), value);
-
-      for (VariableStoreObserver<T> observer : observers) {
-        observer.onAdd(value);
-      }
-      updateVariable(value);
-    }else{
+//    if(removedVariables.containsKey(value.getName())){
+//      getVariablesMap().put(value.getName(), value);
+//
+//      for (VariableStoreObserver<T> observer : observers) {
+//        observer.onAdd(value);
+//      }
+//      updateVariable(value);
+//    }else{
 
     if (containsKey(value.getName())) {
       throw ProcessEngineLogger.CORE_LOGGER.duplicateVariableInstanceException(value);
@@ -97,7 +101,8 @@ public class VariableStore<T extends CoreVariableInstance> {
 
     for (VariableStoreObserver<T> listener : observers) {
       listener.onAdd(value);
-    }}
+    }
+//    }
   }
 
   public void updateVariable(T value)
@@ -190,6 +195,10 @@ public class VariableStore<T extends CoreVariableInstance> {
 
     Collection<T> provideVariables();
 
+  }
+
+  public boolean isRemoved(String variableName) {
+    return removedVariables.containsKey(variableName);
   }
 
 }

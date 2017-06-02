@@ -1,11 +1,12 @@
 package org.camunda.bpm.engine.test.api.variables;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.util.Arrays;
 
 import org.camunda.bpm.engine.repository.ProcessDefinition;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
+import org.camunda.bpm.engine.runtime.VariableInstance;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.engine.test.ProcessEngineRule;
 import org.camunda.bpm.engine.test.util.ProcessEngineTestRule;
@@ -35,14 +36,15 @@ public class ModifyVariableInSameTransactionTest {
         .endEvent()
         .done();
     ProcessDefinition processDefinition = testHelper.deployAndGetDefinition(bpmnModel);
-    VariableMap variables = Variables.createVariables().putValue("listVar", Arrays.asList(new int[] { 1, 2, 3 }));
+    VariableMap variables = Variables.createVariables().putValue("listVar", "bar");
     ProcessInstance instance = engineRule.getRuntimeService().startProcessInstanceById(processDefinition.getId(), variables);
 
     Task task = engineRule.getTaskService().createTaskQuery().singleResult();
     engineRule.getTaskService().complete(task.getId());
 
-    Object variableValue = engineRule.getRuntimeService().getVariable(instance.getId(), "listVar");
-    assertNotNull(variableValue);
+    VariableInstance variable = engineRule.getRuntimeService().createVariableInstanceQuery().processInstanceIdIn(instance.getId()).variableName("listVar").singleResult();
+    assertNotNull(variable);
+    assertEquals("value", variable.getValue());
   }
 
 }
